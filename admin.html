@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bass'Style — Administration</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body class="admin-body">
+
+<!-- Écran de connexion -->
+<div class="admin-login-wrap" id="adminLoginWrap">
+  <div class="admin-login-card">
+    <a href="index.html" class="logo">Bass'<span>Style</span></a>
+    <p>Espace administrateur — accès réservé à l'équipe Bass'Style</p>
+    <form id="loginForm">
+      <input type="password" id="loginPassword" placeholder="Mot de passe" required autofocus>
+      <button type="submit" class="btn-primary">Se connecter</button>
+      <p class="login-error" id="loginError">Mot de passe incorrect. Réessayez.</p>
+    </form>
+    <p class="login-hint">Démo : mot de passe <strong>bassstyle2026</strong> (voir README.md)</p>
+    <p class="login-hint"><a href="index.html">← Retour à la boutique</a></p>
+  </div>
+</div>
+
+<!-- Application admin -->
+<div class="admin-shell" id="adminShell" style="display:none;">
+  <aside class="admin-sidebar">
+    <a href="index.html" class="logo">Bass'<span>Style</span></a>
+    <a href="#" class="admin-nav-item active">📦 Catalogue</a>
+    <a href="index.html" class="admin-nav-item">🛍️ Voir la boutique</a>
+    <a href="#" class="admin-nav-item" id="logoutBtn">🚪 Déconnexion</a>
+  </aside>
+
+  <main class="admin-main">
+    <div class="admin-topbar">
+      <h1>Gestion du catalogue</h1>
+    </div>
+
+    <div class="admin-stats">
+      <div class="stat-card">
+        <div class="label">Total articles</div>
+        <div class="value" id="statTotal">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Chaussures</div>
+        <div class="value clay" id="statShoes">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Perruques</div>
+        <div class="value gold" id="statWigs">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Stock faible (≤5)</div>
+        <div class="value" id="statLow">0</div>
+      </div>
+    </div>
+
+    <div class="admin-toolbar">
+      <input type="text" id="adminSearch" placeholder="Rechercher par nom, marque, ID...">
+      <select id="adminCategoryFilter">
+        <option value="tous">Toutes catégories</option>
+        <option value="chaussures">Chaussures</option>
+        <option value="perruques">Perruques</option>
+      </select>
+      <button class="btn-reset" id="resetDbBtn">Réinitialiser (100 articles)</button>
+      <button class="btn-add" id="addProductBtn">+ Ajouter un article</button>
+    </div>
+
+    <div class="admin-table-wrap">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th></th>
+            <th>Article</th>
+            <th>Catégorie</th>
+            <th>Prix</th>
+            <th>Stock</th>
+            <th>Note</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="adminTableBody"></tbody>
+      </table>
+    </div>
+  </main>
+</div>
+
+<!-- Modal ajout / édition -->
+<div class="scrim" id="adminScrim"></div>
+<div class="overlay" id="formOverlay"></div>
+
+<div class="toast" id="adminToast"></div>
+
+<script src="js/data.js"></script>
+<script src="js/admin.js"></script>
+</body>
+</html>
