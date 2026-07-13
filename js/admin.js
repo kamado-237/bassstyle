@@ -17,6 +17,7 @@
     query: "",
     category: "tous",
     editingId: null,
+    uploadedImageData: null,
   };
 
   const el = {
@@ -213,8 +214,18 @@
           </div>
 
           <div class="form-row">
-            <label>URL de l'image</label>
-            <input type="url" name="image" required value="${p ? p.image : "https://picsum.photos/seed/nouveau/600/750"}">
+            <label>Photo de l'article</label>
+            <div class="image-upload">
+              <img id="imagePreview" class="image-preview" alt="Aperçu" src="${p ? p.image : ""}" style="${p ? "" : "display:none;"}">
+              <label class="upload-btn" for="imageFileInput">📷 Choisir une photo dans la galerie</label>
+              <input type="file" id="imageFileInput" accept="image/*" style="display:none;">
+              <p class="upload-hint" id="uploadHint">Formats JPG/PNG/WebP. L'image est automatiquement redimensionnée.</p>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <label>Ou URL de l'image (optionnel si une photo est importée)</label>
+            <input type="url" name="image" id="imageUrlInput" value="${p && !p.image.startsWith("data:") ? p.image : ""}" placeholder="https://...">
           </div>
 
           <div class="form-row">
@@ -229,6 +240,8 @@
         </form>
       </div>`;
 
+    state.uploadedImageData = p && p.image.startsWith("data:") ? p.image : null;
+
     el.formOverlay.classList.add("open");
     el.scrim.classList.add("open");
     document.body.classList.add("no-scroll");
@@ -236,6 +249,52 @@
     document.getElementById("formClose").addEventListener("click", closeForm);
     document.getElementById("formCancel").addEventListener("click", closeForm);
     document.getElementById("productForm").addEventListener("submit", handleSubmit);
+    document.getElementById("imageFileInput").addEventListener("change", handleImageFile);
+  }
+
+  /* Lecture + redimensionnement de la photo choisie dans la galerie,
+     pour garder des fichiers légers en localStorage. */
+  function resizeImageFile(file, maxWidth, quality) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          let { width, height } = img;
+          if (width > maxWidth) {
+            height = Math.round(height * (maxWidth / width));
+            width = maxWidth;
+          }
+          const canvas = document.createElement("canvas");
+          canvas.width = width;
+          canvas.height = height;
+          canvas.getContext("2d").drawImage(img, 0, 0, width, height);
+          resolve(canvas.toDataURL("image/jpeg", quality));
+        };
+        img.onerror = () => reject(new Error("Image illisible"));
+        img.src = e.target.result;
+      };
+      reader.onerror = () => reject(new Error("Lecture du fichier impossible"));
+      reader.readAsDataURL(file);
+    });
+  }
+
+  async function handleImageFile(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const hint = document.getElementById("uploadHint");
+    const preview = document.getElementById("imagePreview");
+    hint.textContent = "Importation en cours...";
+    try {
+      const dataUrl = await resizeImageFile(file, 700, 0.82);
+      state.uploadedImageData = dataUrl;
+      preview.src = dataUrl;
+      preview.style.display = "block";
+      document.getElementById("imageUrlInput").value = "";
+      hint.textContent = "Photo importée ✓ — elle remplace l'URL ci-dessous.";
+    } catch (err) {
+      hint.textContent = "Impossible de lire cette image, réessayez.";
+    }
   }
 
   function closeForm() {
@@ -243,11 +302,22 @@
     el.scrim.classList.remove("open");
     document.body.classList.remove("no-scroll");
     state.editingId = null;
+    state.uploadedImageData = null;
   }
 
   function handleSubmit(e) {
     e.preventDefault();
     const fd = new FormData(e.target);
+
+    const existing = state.editingId ? state.products.find((x) => x.id === state.editingId) : null;
+    const urlValue = fd.get("image").trim();
+    const finalImage = state.uploadedImageData || urlValue || (existing ? existing.image : "");
+
+    if (!finalImage) {
+      alert("Choisissez une photo dans la galerie ou renseignez une URL d'image.");
+      return;
+    }
+
     const data = {
       name: fd.get("name").trim(),
       category: fd.get("category"),
@@ -256,7 +326,7 @@
       price: Number(fd.get("price")),
       stock: Number(fd.get("stock")),
       rating: Number(fd.get("rating")) || 4,
-      image: fd.get("image").trim(),
+      image: finalImage,
       description: fd.get("description").trim(),
     };
 
